@@ -11,11 +11,9 @@ Keys=False
 Style='lp'
 Show=False
 
-set_data=[]
-
 if len(sys.argv) == 1:
     print 'Error, too few arguments'
-    print 'Usage: plp -n -k -u n1:n2:n3:n4 <list of data files>'
+    print 'Usage: plp -n -k -u n1:n2:n3:n4 <first set of data files> ... -u n1:n2:n3:n4 <n-th set of data files> '
     print '       -n Normalize plots wrt to maximum'
     print '       -k Show legend'
     print '       -l Plot with lines'
@@ -32,6 +30,9 @@ if len(sys.argv) == 1:
 
 
 ignore=False
+
+set_data=[]
+files={}
 for i_cmd,cmd in enumerate(sys.argv[1:]):
     if ignore:
         ignore=False
@@ -60,19 +61,24 @@ for i_cmd,cmd in enumerate(sys.argv[1:]):
             print 'What?'
             sys.exit(1)
     else:
-        break
-
-i_cmd+=1
-
-if len(set_data) == 0:
-    set_data.append('1:2:-1')
+        files[cmd]=set_data
+        if len(sys.argv) == i_cmd+2:
+            break
+        if sys.argv[i_cmd+2][0]=='-':
+            set_data=[]
 
 gpl_head='set terminal wxt\n'
 if not Keys:
     gpl_head+='unset key\n'
 
 data_plt=''
-for data_file in sys.argv[i_cmd:]:
+
+for data_file in files.keys():
+    set_data=files[data_file]
+
+    if len(set_data) == 0:
+        set_data.append('1:2:-1')
+
     f_data=open(data_file,'r')
     for line in f_data:
         if line[0] == '#':
@@ -98,7 +104,7 @@ for data_file in sys.argv[i_cmd:]:
             norm=max(abs(data))
         data_plt+='"'+data_file+'" u ($1/%.8E) w '%(norm)+Style+',\\\n'
         continue
-    
+
     for data_set in set_data:
         try:
             n_cols=map( int, data_set.split(':'))
@@ -109,7 +115,6 @@ for data_file in sys.argv[i_cmd:]:
 
 # Check number of columns
         if max(n_cols) > n_columns:
-            print n_cols[1] > n_columns, n_cols[1], n_columns
             print 'Error too few columns in '+data_file
             print '  requested: '+str(n_cols[1])
             print '  found: '+str(n_columns)
