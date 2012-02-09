@@ -32,7 +32,9 @@ if len(sys.argv) == 1:
 ignore=False
 
 set_data=[]
-files={}
+files=[]
+data_sets=[]
+
 for i_cmd,cmd in enumerate(sys.argv[1:]):
     if ignore:
         ignore=False
@@ -61,7 +63,8 @@ for i_cmd,cmd in enumerate(sys.argv[1:]):
             print 'What?'
             sys.exit(1)
     else:
-        files[cmd]=set_data
+        files.append(cmd)
+        data_sets.append(set_data)
         if len(sys.argv) == i_cmd+2:
             break
         if sys.argv[i_cmd+2][0]=='-':
@@ -73,8 +76,7 @@ if not Keys:
 
 data_plt=''
 
-for data_file in files.keys():
-    set_data=files[data_file]
+for data_file,set_data in zip(files,data_sets):
 
     if len(set_data) == 0:
         set_data.append('1:2:-1')
