@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import numpy as np
+import scipy.interpolate as sci
 import sys
 import os
 
@@ -19,6 +20,8 @@ if len(sys.argv) == 1:
     print '       -l Plot with lines'
     print '       -p Plot with points'
     print '       -s Show gnuplot script'
+    print '       -i n Interpolate n points'
+    print '       -f if "-i n" is present, the interpolated data is dumped to "interp_"+data_file'
     print '       -u n1:n2 -> plot column n2 against n1'
     print "       -u n1:'(f($n2))' -> plot function f of column n2 against n1"
     print '       -u n1:n2:n3 -> plot columns n2 to n3 against n1'
@@ -30,6 +33,8 @@ if len(sys.argv) == 1:
 
 
 ignore=False
+File=False
+Interpolate=False
 
 set_data=[]
 files=[]
@@ -58,6 +63,14 @@ for i_cmd,cmd in enumerate(sys.argv[1:]):
             continue
         elif cmd[1] == 's':
             Show=True
+            continue
+        elif cmd[1] == 'i':
+            Interpolate=True
+            n_points=int(sys.argv[i_cmd+2])
+            ignore=True
+            continue
+        elif cmd[1] == 'f':
+            File=True
             continue
         else:
             print 'What?'
@@ -95,6 +108,21 @@ for data_file,set_data in zip(files,data_sets):
             n_columns=len(row)
             f_data.close()
             break
+# Creates a data file with the interpolated data
+# Assuming first column as x data
+    if Interpolate:
+        data=np.loadtxt(data_file)
+        x=np.linspace(data[0,0],data[-1,0],n_points)
+        f_i=sci.interp1d(data[:,0],data[:,1:],'linear',axis=0)
+        i_data=f_i(x)
+        if File:
+            data_file='interp_'+data_file
+            np.savetxt(data_file,np.c_[x,i_data])
+        else:
+            data_file='/tmp/tmp.dat'
+            np.savetxt(data_file,np.c_[x,i_data])
+
+        
 
 # Reads data file for normalization purposes.
     if Normalize:
@@ -163,3 +191,5 @@ if Show:
 open('/tmp/tmp.gpl','w').write(gpl_head+'pl '+data_plt[:-3]+'\n#EOF')
 os.system(GPLT+' /tmp/tmp.gpl')
 
+if Interpolate and not File:
+    os.system('rm /tmp/tmp.dat')
