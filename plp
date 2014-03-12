@@ -27,6 +27,7 @@ if len(sys.argv) == 1:
     print '       -u n1:n2:n3 -> plot columns n2 to n3 against n1'
     print '       -u n1:n2:n3:n4 -> plot columns n2 to n3 every n4 columns against n1'
     print '       if n2 or n3 is negative, the last column of the data file is assumed'
+    print '       -t <settings_file> Import gnuplot settings'
     print 'If -u is absent "-u 1:-1" is assumed' 
     print 'If -l and -p are absent lines-points style assumed' 
     sys.exit(1)
@@ -39,6 +40,8 @@ Interpolate=False
 set_data=[]
 files=[]
 data_sets=[]
+
+settings_txt=''
 
 for i_cmd,cmd in enumerate(sys.argv[1:]):
     if ignore:
@@ -72,6 +75,10 @@ for i_cmd,cmd in enumerate(sys.argv[1:]):
         elif cmd[1] == 'f':
             File=True
             continue
+        elif cmd[1] == 't':
+            settings_txt=open(sys.argv[i_cmd+2],'r').read()
+            ignore=True
+            continue
         else:
             print 'What?'
             sys.exit(1)
@@ -83,7 +90,9 @@ for i_cmd,cmd in enumerate(sys.argv[1:]):
         if sys.argv[i_cmd+2][0]=='-':
             set_data=[]
 
+
 gpl_head='set terminal wxt\n'
+gpl_head+=settings_txt
 if not Keys:
     gpl_head+='unset key\n'
 
