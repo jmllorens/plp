@@ -5,7 +5,7 @@ import scipy.interpolate as sci
 import sys
 import os
 
-GPLT='/opt/gnuplot_current/bin/gnuplot -persist'
+GPLT='/usr/bin/gnuplot -persist'
 
 Normalize=False
 Keys=False
@@ -95,6 +95,7 @@ for data_file,set_data in zip(files,data_sets):
         set_data.append('1:2:-1')
 
     f_data=open(data_file,'r')
+    n_columns=0
     for line in f_data:
         if line[0] == '#':
             continue
@@ -105,9 +106,9 @@ for data_file,set_data in zip(files,data_sets):
             except:
                 print 'Error reading data file: '+data_file
                 sys.exit(1)
-            n_columns=len(row)
-            f_data.close()
-            break
+            n_columns=max(len(row),n_columns)
+    f_data.close()
+
 # Creates a data file with the interpolated data
 # Assuming first column as x data
     if Interpolate:
