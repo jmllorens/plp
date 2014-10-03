@@ -5,6 +5,13 @@ import scipy.interpolate as sci
 import sys
 import os
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
 GPLT='/usr/bin/gnuplot -persist'
 
 Normalize=False
@@ -42,6 +49,8 @@ files=[]
 data_sets=[]
 
 settings_txt=''
+
+skip_rows = 0
 
 for i_cmd,cmd in enumerate(sys.argv[1:]):
     if ignore:
@@ -106,7 +115,12 @@ for data_file,set_data in zip(files,data_sets):
     f_data=open(data_file,'r')
     n_columns=0
     for line in f_data:
-        if line[0] == '#':
+        if line[0] == '#' or len(line.split()) == 0:
+            continue
+# New version of gnuplot admits comments not starting by '#'
+# and the posibility to use the header to name the columns
+        elif not is_number(line.split()[0]):
+            skip_rows += 1
             continue
         else:
             row=line.split()
@@ -121,7 +135,7 @@ for data_file,set_data in zip(files,data_sets):
 # Creates a data file with the interpolated data
 # Assuming first column as x data
     if Interpolate:
-        data=np.loadtxt(data_file)
+        data=np.loadtxt(data_file,skiprows=skip_rows)
         x=np.linspace(data[0,0],data[-1,0],n_points)
         f_i=sci.interp1d(data[:,0],data[:,1:],'linear',axis=0)
         i_data=f_i(x)
@@ -136,7 +150,7 @@ for data_file,set_data in zip(files,data_sets):
 
 # Reads data file for normalization purposes.
     if Normalize:
-        data=np.loadtxt(data_file)
+        data=np.loadtxt(data_file,skiprows=skip_rows)
     norm=1.0
 
     if n_columns == 1:
