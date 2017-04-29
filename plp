@@ -27,7 +27,9 @@ if len(sys.argv) == 1:
     print '       -l Plot with lines'
     print '       -p Plot with points'
     print '       -s Show gnuplot script'
+    print '       -S Smooth with csplines'
     print '       -i n Interpolate n points'
+    print '       -r set axes ratio to -1'
     print '       -f if "-i n" is present, the interpolated data is dumped to "interp_"+data_file'
     print '       -u n1:n2 -> plot column n2 against n1'
     print "       -u n1:'(f($n2))' -> plot function f of column n2 against n1"
@@ -40,9 +42,11 @@ if len(sys.argv) == 1:
     sys.exit(1)
 
 
-ignore=False
-File=False
-Interpolate=False
+ignore = False
+File = False
+Interpolate = False
+Smooth = False
+Ratio = False
 
 set_data=[]
 files=[]
@@ -76,6 +80,12 @@ for i_cmd,cmd in enumerate(sys.argv[1:]):
         elif cmd[1] == 's':
             Show=True
             continue
+        elif cmd[1] == 'S':
+            Smooth=True
+            continue
+        elif cmd[1] == 'r':
+            Ratio=True
+            continue
         elif cmd[1] == 'i':
             Interpolate=True
             n_points=int(sys.argv[i_cmd+2])
@@ -99,11 +109,18 @@ for i_cmd,cmd in enumerate(sys.argv[1:]):
         if sys.argv[i_cmd+2][0]=='-':
             set_data=[]
 
+if(Smooth):
+    Smooth_arg=' smooth csplines '
+else:
+    Smooth_arg=''
 
-gpl_head='set terminal wxt\n'
-gpl_head+=settings_txt
+gpl_head = 'set terminal wxt\n'
+if Ratio:
+    gpl_head += 'set size ratio -1\n'
+
+gpl_head += settings_txt
 if not Keys:
-    gpl_head+='unset key\n'
+    gpl_head += 'unset key\n'
 
 data_plt=''
 
@@ -156,7 +173,7 @@ for data_file,set_data in zip(files,data_sets):
     if n_columns == 1:
         if Normalize:
             norm=max(abs(data))
-        data_plt+='"'+data_file+'" u ($1/%.8E) w '%(norm)+Style+',\\\n'
+        data_plt+='"'+data_file+'" u ($1/%.8E) w '%(norm)+Style+Smooth_arg+',\\\n'
         continue
 
     for data_set in set_data:
@@ -164,7 +181,7 @@ for data_file,set_data in zip(files,data_sets):
             n_cols=map( int, data_set.split(':'))
         except:
             # An expression is passed to gnuplot
-            data_plt+='"'+data_file+'" u '+data_set+' w '+Style+',\\\n'
+            data_plt+='"'+data_file+'" u '+data_set+' w '+Style+Smooth_arg+',\\\n'
             continue
 
 # Check number of columns
@@ -181,7 +198,7 @@ for data_file,set_data in zip(files,data_sets):
             if Normalize:
                 norm=max(abs(data[:,y_col-1]))
             aux='%i:($%i/%.8E)'%(x_col,y_col,norm)
-            data_plt+='"'+data_file+'" u '+aux+' w '+Style+',\\\n'
+            data_plt+='"'+data_file+'" u '+aux+' w '+Style+Smooth_arg+',\\\n'
         if len(n_cols) == 3:
             x_col=n_cols[0]
             y_col_i=n_cols[1]
@@ -194,7 +211,7 @@ for data_file,set_data in zip(files,data_sets):
                 if Normalize:
                     norm=max(abs(data[:,y_col-1]))
                 aux='%i:($%i/%.8E)'%(x_col,y_col,norm)
-                data_plt+='"'+data_file+'" u '+aux+' w '+Style+',\\\n'
+                data_plt+='"'+data_file+'" u '+aux+' w '+Style+Smooth_arg+',\\\n'
         if len(n_cols) == 4:
             x_col=n_cols[0]
             y_col_i=n_cols[1]
@@ -208,7 +225,7 @@ for data_file,set_data in zip(files,data_sets):
                 if Normalize:
                     norm=max(abs(data[:,y_col-1]))
                 aux='%i:($%i/%.8E)'%(x_col,y_col,norm)
-                data_plt+='"'+data_file+'" u '+aux+' w '+Style+',\\\n'
+                data_plt+='"'+data_file+'" u '+aux+' w '+Style+Smooth_arg+',\\\n'
 
 if Show:
     print gpl_head+'pl '+data_plt[:-3]+'\n#EOF'
