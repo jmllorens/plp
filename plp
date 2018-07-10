@@ -4,6 +4,7 @@ import numpy as np
 import scipy.interpolate as sci
 import sys
 import os
+import argparse
 
 def is_number(s):
     try:
@@ -11,6 +12,22 @@ def is_number(s):
         return True
     except ValueError:
         return False
+
+parser = argparse.ArgumentParser('Generates a plot from input files.')
+parser.add_argument("-n", "--norm", action="store_true", help="Normalize plot wrt maximum.")
+parser.add_argument("-k", "--legend", action="store_true", help="Show legend.")
+parser.add_argument("-l", "--lines", action="store_true", help="Plot with lines.")
+parser.add_argument("-p", "--points", action="store_true", help="Plot with points.")
+parser.add_argument("-s", "--script", action="store_true", help="Show gnuplot script.")
+parser.add_argument("-S", "--smooth", action="store_true", help="Smooth with splines.")
+parser.add_argument("-r", "--ratio", action="store_true", help="Equal axes ratio.")
+parser.add_argument("-f", "--finterp", action="store_true", nargs="?", type=str, help="The interpolated data is dumped into 'interp_<data_file>'.")
+parser.add_argument("-i", "--interp", action="store", nargs="?", type=int, help="Number of points to interpolate", default=1)
+
+
+parser.add_argument("files", nargs="*", help="Input files")
+
+args = parser.parse_args()
 
 GPLT='/usr/bin/gnuplot -persist'
 
@@ -22,15 +39,6 @@ Show=False
 if len(sys.argv) == 1:
     print 'Error, too few arguments'
     print 'Usage: plp -n -k -u n1:n2:n3:n4 <first set of data files> ... -u n1:n2:n3:n4 <n-th set of data files> '
-    print '       -n Normalize plots wrt to maximum'
-    print '       -k Show legend'
-    print '       -l Plot with lines'
-    print '       -p Plot with points'
-    print '       -s Show gnuplot script'
-    print '       -S Smooth with csplines'
-    print '       -i n Interpolate n points'
-    print '       -r set axes ratio to -1'
-    print '       -f if "-i n" is present, the interpolated data is dumped to "interp_"+data_file'
     print '       -u n1:n2 -> plot column n2 against n1'
     print "       -u n1:'(f($n2))' -> plot function f of column n2 against n1"
     print '       -u n1:n2:n3 -> plot columns n2 to n3 against n1'
