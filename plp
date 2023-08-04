@@ -3,6 +3,7 @@
 import numpy as np
 import scipy.interpolate as sci
 import sys
+import subprocess as sub
 import os
 
 def is_number(s):
@@ -12,7 +13,7 @@ def is_number(s):
     except ValueError:
         return False
 
-GPLT='/usr/bin/gnuplot -persist'
+GPLT='/usr/bin/gnuplot '
 
 Normalize=False
 Keys=False
@@ -114,7 +115,8 @@ if(Smooth):
 else:
     Smooth_arg=''
 
-gpl_head = 'set terminal wxt\n'
+#gpl_head = 'set terminal wxt\n'
+gpl_head = 'set terminal qt\n'
 if Ratio:
     gpl_head += 'set size ratio -1\n'
 
@@ -227,10 +229,13 @@ for data_file,set_data in zip(files,data_sets):
                 aux='%i:($%i/%.8E)'%(x_col,y_col,norm)
                 data_plt+='"'+data_file+'" u '+aux+' w '+Style+Smooth_arg+',\\\n'
 
+gpl_txt = gpl_head+'pl '+data_plt[:-3]+'\npause mouse close\n#EOF'
 if Show:
-    print(gpl_head+'pl '+data_plt[:-3]+'\n#EOF')
-open('/tmp/tmp.gpl','w').write(gpl_head+'pl '+data_plt[:-3]+'\n#EOF')
-os.system(GPLT+' /tmp/tmp.gpl')
+    print(gpl_txt)
+open('/tmp/tmp.gpl','w').write(gpl_txt)
+
+p = sub.Popen(GPLT + ' /tmp/tmp.gpl', shell=True)
+os.waitpid(p.pid, 0)
 
 if Interpolate and not File:
-    os.system('rm /tmp/tmp.dat')
+    sub.check_call('rm /tmp/tmp.dat')
